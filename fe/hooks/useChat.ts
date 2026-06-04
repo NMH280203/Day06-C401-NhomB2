@@ -2,7 +2,7 @@
 
 import { useCallback } from "react";
 import { useChatStore } from "@/store/chatStore";
-import { mockSendMessage } from "@/lib/api";
+import { sendMessage } from "@/lib/api";
 import type { Message } from "@/lib/types";
 
 function generateId(): string {
@@ -54,54 +54,49 @@ export function useChat() {
       // 4. Prepare all messages for payload
       const allMessages = [...messages, userMsg];
 
-      // 5. Call API with SSE callbacks
-      // Using mock for now — swap to `sendMessage` from api.ts when BE is ready
-      await mockSendMessage(
-        { messages: allMessages, context },
-        {
-          onThinking: (status) => {
-            setStatus(status);
-            updateLastAssistantMessage({ status });
-          },
-          onFoodResults: (foods) => {
-            setResults(foods, results.restaurants);
-            updateLastAssistantMessage({ foods });
-          },
-          onRestaurantResults: (restaurants) => {
-            setResults(results.foods, restaurants);
-            updateLastAssistantMessage({ restaurants });
-          },
-          onTextDelta: (delta) => {
-            // Append delta char to the last assistant message's content
-            appendToLastAssistantContent(delta);
-          },
-          onAskContext: (_field, message) => {
-            const askMsg: Message = {
-              id: generateId(),
-              role: "assistant",
-              content: message,
-              timestamp: Date.now(),
-            };
-            addMessage(askMsg);
-          },
-          onDone: (follow_up_suggestions) => {
-            updateLastAssistantMessage({
-              follow_up_suggestions,
-              status: undefined,
-            });
-            setLoading(false);
-            setStatus("");
-          },
-          onError: (errorMsg) => {
-            updateLastAssistantMessage({
-              content: `⚠️ ${errorMsg}`,
-              status: undefined,
-            });
-            setLoading(false);
-            setStatus("");
-          },
-        }
-      );
+      try {
+        await sendMessage(
+          { messages: allMessages, context },
+          {
+            onThinking: (status) => {
+              setStatus(status);
+              updateLastAssistantMessage({ status });
+            },
+            onFoodResults: (foods) => {
+              setResults(foods, results.restaurants);
+              updateLastAssistantMessage({ foods });
+            },
+            onRestaurantResults: (restaurants) => {
+              setResults(results.foods, restaurants);
+              updateLastAssistantMessage({ restaurants });
+            },
+            onTextDelta: (delta) => {
+              appendToLastAssistantContent(delta);
+            },
+            onAskContext: (_field, message) => {
+              updateLastAssistantMessage({
+                content: message,
+                status: undefined,
+              });
+            },
+            onDone: (follow_up_suggestions) => {
+              updateLastAssistantMessage({
+                follow_up_suggestions,
+                status: undefined,
+              });
+            },
+            onError: (errorMsg) => {
+              updateLastAssistantMessage({
+                content: errorMsg,
+                status: undefined,
+              });
+            },
+          }
+        );
+      } finally {
+        setLoading(false);
+        setStatus("");
+      }
     },
     [
       messages,
