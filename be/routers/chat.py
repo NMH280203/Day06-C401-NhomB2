@@ -84,7 +84,12 @@ async def chat(request: ChatRequest) -> StreamingResponse:
             count = len(data.get("foods", []))
             log_event(logger, "SSE food_results", count=count, names=",".join(data.get("food_names", [])[:5]))
         elif event in ("ask_context", "error"):
-            log_event(logger, f"SSE {event}", field=data.get("field"), message=data.get("message", "")[:120])
+            log_event(
+                logger,
+                f"SSE {event}",
+                field=data.get("field"),
+                detail=(data.get("message") or "")[:120],
+            )
         await queue.put((event, data))
 
     async def event_generator():

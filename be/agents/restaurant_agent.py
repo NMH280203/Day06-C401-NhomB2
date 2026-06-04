@@ -13,7 +13,13 @@ from tools import definitions, executor
 logger = get_logger("restaurant_agent")
 
 AGENT_SYSTEM = """Bạn là restaurant agent. Tìm quán gần, rank theo món gợi ý.
-Bắt buộc có location trong context để search — nếu không có, dùng ask_user_for_context hỏi vị trí."""
+
+VỊ TRÍ (ưu tiên cao nhất):
+- Dùng ĐÚNG lat/lng trong context — đó là khu vực user nhập (quận/địa danh) hoặc GPS.
+- Nếu ngữ cảnh ghi "user nhập trong chat" → không tìm quán ở thành phố/quận khác.
+- search_nearby_restaurants: luôn truyền lat/lng từ context, không tự đổi tọa độ.
+
+Nếu không có location → ask_user_for_context hỏi quận/khu vực."""
 
 
 async def _run_without_llm(context: UserContext, food_names: list[str]) -> dict:

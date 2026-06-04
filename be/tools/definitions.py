@@ -2,7 +2,8 @@ orchestrator_tools: list[dict] = [
     {
         "name": "detect_intent",
         "description": (
-            "Phân loại ý định. Dùng out_of_scope nếu câu hỏi KHÔNG liên quan đồ ăn/nhà hàng/gợi ý bữa ăn."
+            "Phân loại ý định. out_of_scope CHỈ khi câu KHÔNG liên quan ăn uống/F&B. "
+            "Cafe, cà phê, trà sữa, quán nước, bar = IN-SCOPE (food_and_restaurant hoặc restaurant_only)."
         ),
         "input_schema": {
             "type": "object",

@@ -27,7 +27,7 @@ export function RestaurantCard({
 
   return (
     <div
-      className="group glass-card overflow-hidden animate-slide-up"
+      className="group glass-card overflow-hidden opacity-0 animate-slide-up hover:scale-[1.02] transition-transform duration-300"
       style={{ animationDelay: `${index * 80}ms` }}
     >
       <div className="p-4">

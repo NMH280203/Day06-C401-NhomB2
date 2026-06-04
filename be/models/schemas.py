@@ -11,6 +11,7 @@ class Location(BaseModel):
 
 class UserContext(BaseModel):
     location: Location | None = None
+    location_source: Literal["user_message", "device_gps"] | None = None
     budget: int | None = None
     people: int | None = None
     meal_time: Literal["breakfast", "lunch", "dinner", "snack"] | None = None

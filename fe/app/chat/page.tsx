@@ -2,6 +2,7 @@
 
 import { ChatWindow } from "@/components/chat/ChatWindow";
 import { ResultPanel } from "@/components/results/ResultPanel";
+import { AnimatedBackground } from "@/components/ui/AnimatedBackground";
 import { useGeolocation } from "@/hooks/useGeolocation";
 import { useChatStore } from "@/store/chatStore";
 import { Button } from "@/components/ui/Button";
@@ -16,9 +17,9 @@ export default function ChatPage() {
   const hasLocation = !!context.location || !!location;
 
   return (
-    <div className="h-screen flex flex-col">
-      {/* ─── Glassmorphism Header ─────────────────────────────── */}
-      <header className="flex-shrink-0 glass-navbar z-30">
+    <div className="h-screen flex flex-col relative">
+      <AnimatedBackground />
+      <header className="flex-shrink-0 glass-navbar z-30 animate-slide-down">
         <div className="flex items-center justify-between px-5 sm:px-8 py-4">
           {/* Left: App brand */}
           <div className="flex items-center gap-3.5">
@@ -74,8 +75,8 @@ export default function ChatPage() {
 
         {/* Location banner */}
         {!hasLocation && (
-          <div className="px-5 sm:px-8 pb-4">
-            <div className="flex items-center gap-3 p-3.5 glass-card">
+          <div className="px-5 sm:px-8 pb-4 animate-slide-down">
+            <div className="flex items-center gap-3 p-3.5 glass-card hover:shadow-glow-sm transition-shadow duration-300">
               <span className="text-xl">📍</span>
               <p className="flex-1 text-sm text-surface-600">
                 Cho phép truy cập vị trí để tìm quán gần bạn

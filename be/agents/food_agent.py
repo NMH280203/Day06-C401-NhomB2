@@ -12,11 +12,33 @@ from tools import definitions, executor
 logger = get_logger("food_agent")
 
 AGENT_SYSTEM = """Bạn là food agent. Dùng tools để lấy thời tiết (nếu có vị trí) và gợi ý món.
-Khi đủ thông tin, tóm tắt ngắn các món đã tìm được. Nếu thiếu budget hoặc meal_time quan trọng, dùng ask_user_for_context."""
+
+VỊ TRÍ: Nếu context có địa điểm user nhập (quận/thành phố), gợi ý món phù hợp vùng đó
+(vd: Hà Nội vs Sài Gòn). Không bỏ qua địa điểm user nêu.
+
+Khi đủ thông tin, tóm tắt ngắn các món đã tìm được.
+Nếu thiếu budget hoặc meal_time quan trọng, dùng ask_user_for_context."""
 
 
 def _context_dict(context: UserContext) -> dict:
     return context.model_dump()
+
+
+def _food_search_params(context: UserContext, **extra: object) -> dict:
+    params: dict = {
+        "meal_time": context.meal_time or "lunch",
+        "budget": context.budget or 80000,
+        "preferences": context.preferences,
+        "allergies": context.allergies,
+        "purpose": context.purpose or "solo",
+    }
+    if context.location:
+        params["lat"] = context.location.lat
+        params["lng"] = context.location.lng
+        if context.location.address:
+            params["location_address"] = context.location.address
+    params.update(extra)
+    return params
 
 
 async def _run_without_llm(context: UserContext) -> dict:
@@ -29,14 +51,7 @@ async def _run_without_llm(context: UserContext) -> dict:
         weather = w.get("condition", "normal")
     result = await executor.execute(
         "search_food_by_criteria",
-        {
-            "meal_time": context.meal_time or "lunch",
-            "budget": context.budget or 80000,
-            "preferences": context.preferences,
-            "allergies": context.allergies,
-            "weather": weather,
-            "purpose": context.purpose or "solo",
-        },
+        _food_search_params(context, weather=weather),
     )
     foods = result.get("foods", [])
     return {"foods": foods, "food_names": [f["name"] for f in foods]}
@@ -64,14 +79,7 @@ async def run(context: UserContext) -> dict:
             if not foods:
                 result = await executor.execute(
                     "search_food_by_criteria",
-                    {
-                        "meal_time": context.meal_time or "lunch",
-                        "budget": context.budget or 80000,
-                        "preferences": context.preferences,
-                        "allergies": context.allergies,
-                        "weather": "normal",
-                        "purpose": context.purpose or "solo",
-                    },
+                    _food_search_params(context, weather="normal"),
                 )
                 foods = result.get("foods", [])
             names = [f["name"] for f in foods]
@@ -90,11 +98,8 @@ async def run(context: UserContext) -> dict:
                 inp.setdefault("lat", context.location.lat)
                 inp.setdefault("lng", context.location.lng)
             if tu.name == "search_food_by_criteria":
-                inp.setdefault("meal_time", context.meal_time or "lunch")
-                inp.setdefault("budget", context.budget or 80000)
-                inp.setdefault("preferences", context.preferences)
-                inp.setdefault("allergies", context.allergies)
-                inp.setdefault("purpose", context.purpose or "solo")
+                for k, v in _food_search_params(context).items():
+                    inp.setdefault(k, v)
 
             result = await executor.execute(tu.name, inp)
             if result.get("ask"):

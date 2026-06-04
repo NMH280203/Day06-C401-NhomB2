@@ -41,6 +41,8 @@ export function ResultPanel({ foods, restaurants }: ResultPanelProps) {
 
   if (!hasData) return null;
 
+  const totalCount = foods.length + restaurants.length;
+
   const tabs: { key: TabKey; label: string; icon: string; show: boolean }[] = [
     { key: "foods", label: "Món ăn", icon: "🍜", show: foods.length > 0 },
     {
@@ -90,38 +92,45 @@ export function ResultPanel({ foods, restaurants }: ResultPanelProps) {
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
-            className={`flex items-center gap-1.5 px-4 py-3.5 text-sm font-medium border-b-2 transition-all duration-300 ${
+            className={`relative flex items-center gap-1.5 px-4 py-3.5 text-sm font-medium border-b-2 transition-all duration-300 ${
               activeTab === tab.key
-                ? "border-primary-500 text-primary-600"
-                : "border-transparent text-surface-400 hover:text-surface-600 hover:border-surface-300/50"
+                ? "border-primary-500 text-primary-600 scale-105"
+                : "border-transparent text-surface-400 hover:text-surface-600 hover:border-surface-300/50 hover:scale-[1.02]"
             }`}
           >
-            <span>{tab.icon}</span>
+            <span className={activeTab === tab.key ? "animate-pop-in" : ""}>
+              {tab.icon}
+            </span>
             <span>{tab.label}</span>
           </button>
         ))}
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4">{renderContent()}</div>
+      <div key={activeTab} className="flex-1 overflow-y-auto p-4 animate-tab-fade">
+        {renderContent()}
+      </div>
     </>
   );
 
   return (
     <>
-      <aside className="hidden lg:flex flex-col w-96 border-l border-surface-200 bg-white/80 backdrop-blur-xl h-full animate-slide-in-right">
+      <aside className="hidden lg:flex flex-col w-96 border-l border-surface-200 bg-white/80 backdrop-blur-xl h-full animate-slide-in-right opacity-0">
         {panelContent}
       </aside>
 
       {hasData && (
         <button
           onClick={() => setIsSheetOpen(!isSheetOpen)}
-          className="lg:hidden fixed bottom-24 right-4 z-40 w-14 h-14 rounded-2xl btn-glow flex items-center justify-center active:scale-95 transition-transform animate-glow-pulse"
+          className="lg:hidden fixed bottom-24 right-4 z-40 w-14 h-14 rounded-2xl btn-glow flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 animate-pop-in"
           aria-label="Xem kết quả"
         >
           <span className="text-xl">{isSheetOpen ? "✕" : "📋"}</span>
           {!isSheetOpen && (
-            <span className="absolute -top-1 -right-1 w-5 h-5 bg-accent-teal rounded-full text-[10px] text-white font-bold flex items-center justify-center shadow-sm">
-              {foods.length + restaurants.length}
+            <span
+              key={totalCount}
+              className="absolute -top-1 -right-1 min-w-5 h-5 px-1 bg-accent-teal rounded-full text-[10px] text-white font-bold flex items-center justify-center shadow-sm animate-bounce-in"
+            >
+              {totalCount}
             </span>
           )}
         </button>

@@ -11,8 +11,8 @@ export function RestaurantList({ restaurants, onViewOnMap }: RestaurantListProps
 
   return (
     <div className="space-y-3">
-      <h3 className="text-sm font-semibold text-surface-400 uppercase tracking-wider flex items-center gap-2">
-        <span>🏪</span>
+      <h3 className="text-sm font-semibold text-surface-400 uppercase tracking-wider flex items-center gap-2 animate-fade-in">
+        <span className="inline-block animate-pop-in">🏪</span>
         <span>Quán ăn gần bạn</span>
         <span className="bg-accent-teal/10 text-emerald-700 text-xs px-2.5 py-0.5 rounded-full font-bold backdrop-blur-sm">
           {restaurants.length}

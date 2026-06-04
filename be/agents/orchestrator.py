@@ -8,7 +8,7 @@ from models.schemas import Message, UserContext
 from prompt.builder import build_system_prompt
 from services import llm
 from services.chat_response import finish, respond_apology, respond_ask, stream_text
-from services.geo_hints import enrich_context_from_text
+from services.geo_hints import apply_location_priority, extract_location_from_text
 from services.llm_errors import is_llm_unavailable
 from services.llm_messages import response_to_assistant_message
 from services.out_of_scope import respond as respond_out_of_scope
@@ -18,14 +18,23 @@ from tools import definitions
 StreamCallback = Callable[[str, dict], Awaitable[None]]
 logger = get_logger("orchestrator")
 
-ORCHESTRATOR_SYSTEM = """Bạn là orchestrator gợi ý món & quán tại Việt Nam.
+ORCHESTRATOR_SYSTEM = """Bạn là orchestrator gợi ý món & quán ăn uống tại Việt Nam.
+
+PHẠM VI (in-scope):
+- Món ăn, nhà hàng, quán ăn, buffet, lẩu, street food
+- Cafe, cà phê, trà sữa, quán nước, bánh ngọt, bar/pub (gợi ý địa điểm)
+- Câu dài nhiều ràng buộc về ăn uống → LUÔN xử lý
+
+OUT-OF-SCOPE (từ chối / intent out_of_scope):
+- Code, crypto, chính trị, bài tập, thời tiết thuần, tin tức, du lịch không gắn ăn uống
+- KHÔNG gắn out_of_scope cho cafe/trà sữa/quán nước
 
 QUY TẮC:
-- Câu hỏi về ăn uống (dù dài, nhiều ràng buộc, tiếng Anh) → KHÔNG dùng out_of_scope
-- out_of_scope CHỈ khi hỏi code, crypto, chính trị, bài tập không liên quan ăn
-- Luồng: detect_intent → run_food_agent → run_restaurant_agent (nếu có khu vực/location)
-- Câu có tên quận/thành phố → coi như đủ location, gọi restaurant agent
-- Trả lời tổng hợp ngắn gọn, có lý do, tôn trọng dị ứng & ngân sách"""
+- Luồng: detect_intent → run_food_agent → run_restaurant_agent (nếu có location)
+- **Vị trí:** Ưu tiên quận/thành phố user GÕ > GPS
+- Câu có tên quận/thành phố → gọi restaurant agent
+- KHÔNG ghi đè location trong context patch
+- Trả lời ngắn gọn, tôn trọng dị ứng & ngân sách"""
 
 
 def _to_api_messages(messages: list[Message]) -> list[dict]:
@@ -47,15 +56,23 @@ def _merge_context(base: UserContext, patch: dict | None) -> UserContext:
         if val is None:
             continue
         if key == "location":
-            if isinstance(val, dict) and "lat" in val and "lng" in val:
-                merged["location"] = val
-            elif isinstance(val, list) and len(val) >= 2:
-                merged["location"] = {"lat": float(val[0]), "lng": float(val[1])}
+            # Không cho LLM/agent ghi đè — vị trí do user chat / GPS đã resolve ở orchestrator
             continue
         if val == [] or val == {}:
             continue
         merged[key] = val
     return UserContext.model_validate(merged)
+
+
+def _resolve_agent_context(
+    base: UserContext,
+    patch: dict | None,
+    user_text: str,
+) -> UserContext:
+    """Merge context patch từ tool, giữ ưu tiên vị trí user nhập."""
+    merged = _merge_context(base, patch)
+    ctx, _ = apply_location_priority(merged, user_text)
+    return ctx
 
 
 async def _safe_fallback(
@@ -77,21 +94,36 @@ async def run(
     stream_callback: StreamCallback,
 ) -> None:
     user_text = _last_user_text(messages)
-    context = enrich_context_from_text(context, user_text)
+    context, location_source = apply_location_priority(context, user_text)
     log_event(
         logger,
         "Orchestrator start",
         user=user_text[:160],
         has_location=bool(context.location),
+        location_source=location_source,
         lat=context.location.lat if context.location else None,
         lng=context.location.lng if context.location else None,
+        address=context.location.address if context.location else None,
     )
 
     if user_text and not is_food_related(user_text):
         await respond_out_of_scope(stream_callback)
         return
 
-    system = build_system_prompt(context) + "\n\n" + ORCHESTRATOR_SYSTEM
+    loc_note = None
+    if location_source == "user_message" and user_text:
+        loc = extract_location_from_text(user_text)
+        if loc and loc.address:
+            loc_note = loc.address
+    system = (
+        build_system_prompt(
+            context,
+            location_source=location_source,
+            user_location_note=loc_note,
+        )
+        + "\n\n"
+        + ORCHESTRATOR_SYSTEM
+    )
     api_messages = _to_api_messages(messages)
     food_payload: dict | None = None
     restaurant_payload: dict | None = None
@@ -127,10 +159,13 @@ async def run(
                     intent = tu.input.get("intent", "clarify")
                     confidence = tu.input.get("confidence", 0)
                     missing = tu.input.get("missing_context", [])
-                    # Chỉ rule-based scope; bỏ qua out_of_scope từ LLM nếu câu có tín hiệu ăn uống
-                    if intent == "out_of_scope" and user_text and not is_food_related(user_text):
-                        await respond_out_of_scope(stream_callback)
-                        return
+                    if intent == "out_of_scope":
+                        if user_text and is_food_related(user_text):
+                            intent = "food_and_restaurant"
+                            log_event(logger, "Scope override", reason="llm_out_of_scope_but_in_scope")
+                        else:
+                            await respond_out_of_scope(stream_callback)
+                            return
                     await stream_callback(
                         "thinking",
                         {
@@ -145,7 +180,7 @@ async def run(
                     }
                 elif tu.name == "run_food_agent":
                     ctx_in = tu.input.get("context") if isinstance(tu.input.get("context"), dict) else {}
-                    ctx = enrich_context_from_text(_merge_context(context, ctx_in), user_text)
+                    ctx = _resolve_agent_context(context, ctx_in, user_text)
                     agent_result = await food_agent.run(ctx)
                     if agent_result.get("ask"):
                         await respond_ask(
@@ -165,7 +200,7 @@ async def run(
                     result = agent_result
                 elif tu.name == "run_restaurant_agent":
                     ctx_in = tu.input.get("context") if isinstance(tu.input.get("context"), dict) else {}
-                    ctx = enrich_context_from_text(_merge_context(context, ctx_in), user_text)
+                    ctx = _resolve_agent_context(context, ctx_in, user_text)
                     names = tu.input.get("food_names") or (
                         food_payload.get("food_names", []) if food_payload else []
                     )

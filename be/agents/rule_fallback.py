@@ -6,7 +6,7 @@ from typing import Awaitable, Callable
 from core.logging_config import get_logger, log_event, log_location, log_restaurants
 from models.schemas import Message, UserContext
 from services.chat_response import finish, respond_ask, stream_text
-from services.geo_hints import enrich_context_from_text
+from services.geo_hints import apply_location_priority
 from services.out_of_scope import respond as respond_out_of_scope
 from services.scope import is_food_related
 from tools import executor
@@ -101,14 +101,16 @@ async def run(
 ) -> None:
     text = _last_user_text(messages)
     log_event(logger, "Rule fallback start", reason=reason[:200], user=text[:120])
-    if context.location:
-        log_location(logger, "Rule fallback location", context.location.lat, context.location.lng)
 
     if text and not is_food_related(text):
         await respond_out_of_scope(stream_callback)
         return
 
-    context = enrich_context_from_text(context, text)
+    context, loc_src = apply_location_priority(context, text)
+    if context.location:
+        log_location(logger, "Rule fallback location", context.location.lat, context.location.lng)
+    if loc_src:
+        log_event(logger, "Rule fallback location", source=loc_src)
 
     await stream_callback(
         "thinking",
@@ -138,17 +140,20 @@ async def run(
         )
         weather = w.get("condition", "normal")
 
-    food_result = await executor.execute(
-        "search_food_by_criteria",
-        {
-            "meal_time": meal_time,
-            "budget": budget,
-            "preferences": preferences,
-            "allergies": allergies,
-            "weather": weather,
-            "purpose": context.purpose or "solo",
-        },
-    )
+    food_params: dict = {
+        "meal_time": meal_time,
+        "budget": budget,
+        "preferences": preferences,
+        "allergies": allergies,
+        "weather": weather,
+        "purpose": context.purpose or "solo",
+    }
+    if context.location:
+        food_params["lat"] = context.location.lat
+        food_params["lng"] = context.location.lng
+        if context.location.address:
+            food_params["location_address"] = context.location.address
+    food_result = await executor.execute("search_food_by_criteria", food_params)
     foods = food_result.get("foods", [])
     food_names = [f["name"] for f in foods]
     await stream_callback("food_results", {"foods": foods, "food_names": food_names})

@@ -32,7 +32,11 @@ export function MessageList({
             </div>
           </div>
 
+<<<<<<< HEAD
           <h2 className="text-2xl font-bold text-gradient-cyan mb-3 animate-slide-down">
+=======
+          <h2 className="text-2xl font-bold text-gradient-cyan mb-3">
+>>>>>>> ed86a1784f0fe901f75f72734f54f1ab89c18fa1
             Xin chào! 
           </h2>
           <p className="text-surface-500 text-sm leading-relaxed mb-8 animate-fade-in">

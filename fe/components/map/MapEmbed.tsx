@@ -79,10 +79,10 @@ export function MapEmbed({
       )}
 
       {mapSrc ? (
-        <div className="flex-1 min-h-[280px] rounded-xl overflow-hidden border border-surface-200">
+        <div className="flex-1 min-h-[280px] rounded-xl overflow-hidden border border-surface-200 animate-scale-in">
           <iframe
             key={selected?.place_id ?? "overview"}
-            className="w-full h-full min-h-[280px]"
+            className="w-full h-full min-h-[280px] animate-fade-in"
             src={mapSrc}
             style={{ border: 0 }}
             loading="lazy"
@@ -119,10 +119,10 @@ export function MapEmbed({
               type="button"
               disabled={!hasCoords}
               onClick={() => hasCoords && onSelectPlace?.(r.place_id)}
-              className={`w-full flex items-center gap-2 p-3 rounded-xl border text-left text-sm transition-all ${
+              className={`w-full flex items-center gap-2 p-3 rounded-xl border text-left text-sm transition-all duration-300 ${
                 isActive
-                  ? "bg-primary-50 border-primary-400 shadow-sm ring-1 ring-primary-200"
-                  : "bg-white border-surface-200 hover:border-primary-300 hover:shadow-md"
+                  ? "bg-primary-50 border-primary-400 shadow-sm ring-1 ring-primary-200 scale-[1.02]"
+                  : "bg-white border-surface-200 hover:border-primary-300 hover:shadow-md hover:translate-x-0.5"
               } ${!hasCoords ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
             >
               <span className={isActive ? "text-primary-600" : "text-surface-400"}>
