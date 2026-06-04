@@ -29,7 +29,7 @@ export function MessageList({ messages, onSuggestionClick }: MessageListProps) {
           </div>
 
           <h2 className="text-2xl font-bold text-gradient-cyan mb-3">
-            Xin chào! 👋
+            Xin chào! 
           </h2>
           <p className="text-surface-500 text-sm leading-relaxed mb-8">
             Mình là trợ lý gợi ý món ăn & nhà hàng AI. Hãy cho mình biết bạn
