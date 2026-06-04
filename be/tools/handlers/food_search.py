@@ -61,6 +61,7 @@ async def handle(tool_input: dict) -> dict:
         weather=str(weather),
         purpose=str(purpose),
         limit=5,
+        user_text=tool_input.get("user_text") or "",
     )
     log_event(
         logger,

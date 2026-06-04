@@ -8,6 +8,7 @@ from models.schemas import Message, UserContext
 from prompt.builder import build_system_prompt
 from services import llm
 from services.chat_response import finish, respond_apology, respond_ask, stream_text
+from services.context_gaps import build_clarification, enrich_context_from_text, list_missing_fields
 from services.geo_hints import apply_location_priority, extract_location_from_text
 from services.llm_errors import is_llm_unavailable
 from services.llm_messages import response_to_assistant_message
@@ -34,6 +35,7 @@ QUY TẮC:
 - **Vị trí:** Ưu tiên quận/thành phố user GÕ > GPS
 - Câu có tên quận/thành phố → gọi restaurant agent
 - KHÔNG ghi đè location trong context patch
+- **Thiếu thông tin:** intent=clarify + missing_context (budget, location, meal_time, people, dietary) — hệ thống sẽ hỏi lại user
 - Trả lời ngắn gọn, tôn trọng dị ứng & ngân sách"""
 
 
@@ -94,6 +96,7 @@ async def run(
     stream_callback: StreamCallback,
 ) -> None:
     user_text = _last_user_text(messages)
+    context = enrich_context_from_text(context, user_text)
     context, location_source = apply_location_priority(context, user_text)
     log_event(
         logger,
@@ -108,6 +111,22 @@ async def run(
 
     if user_text and not is_food_related(user_text):
         await respond_out_of_scope(stream_callback)
+        return
+
+    clarify = build_clarification(list_missing_fields(context, user_text))
+    if clarify:
+        log_event(
+            logger,
+            "Orchestrator ask context",
+            field=clarify.field,
+            missing=",".join(clarify.missing_fields),
+        )
+        await respond_ask(
+            stream_callback,
+            clarify.field,
+            clarify.message,
+            list(clarify.missing_fields),
+        )
         return
 
     loc_note = None
@@ -166,6 +185,18 @@ async def run(
                         else:
                             await respond_out_of_scope(stream_callback)
                             return
+                    if intent == "clarify" or missing:
+                        rule_missing = list_missing_fields(context, user_text)
+                        combined = list(dict.fromkeys([*missing, *rule_missing]))
+                        clarify_llm = build_clarification(combined)
+                        if clarify_llm:
+                            await respond_ask(
+                                stream_callback,
+                                clarify_llm.field,
+                                clarify_llm.message,
+                                list(clarify_llm.missing_fields),
+                            )
+                            return
                     await stream_callback(
                         "thinking",
                         {
@@ -187,6 +218,7 @@ async def run(
                             stream_callback,
                             agent_result.get("field", "context"),
                             agent_result.get("message", "Bạn cho mình thêm thông tin nhé?"),
+                            agent_result.get("missing_fields"),
                         )
                         return
                     food_payload = agent_result
@@ -210,6 +242,7 @@ async def run(
                             stream_callback,
                             agent_result.get("field", "location"),
                             agent_result.get("message", "Bạn đang ở khu vực nào để mình tìm quán gần bạn?"),
+                            agent_result.get("missing_fields"),
                         )
                         return
                     restaurant_payload = agent_result

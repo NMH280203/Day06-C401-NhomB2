@@ -78,6 +78,14 @@ export function MessageBubble({
                   isUser ? "text-white" : "text-surface-800"
                 }`}
               >
+                {!isUser && message.ask_field && (
+                  <p className="text-[11px] font-medium text-primary-600 mb-2">
+                    💬 Cần thêm thông tin
+                    {message.missing_context?.length
+                      ? `: ${message.missing_context.join(", ")}`
+                      : ""}
+                  </p>
+                )}
                 {renderContent(message.content)}
                 {isStreaming && (
                   <span className="inline-block w-0.5 h-4 ml-0.5 bg-primary-500 align-middle animate-pulse" />

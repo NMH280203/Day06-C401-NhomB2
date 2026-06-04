@@ -155,10 +155,15 @@ function handleSSEEvent(
       break;
     }
     case "ask_context": {
-      const obj = parsed as { field?: string; message?: string };
+      const obj = parsed as {
+        field?: string;
+        message?: string;
+        missing_fields?: string[];
+      };
       callbacks.onAskContext(
         obj.field ?? "context",
-        obj.message ?? "Bạn cho mình thêm thông tin nhé?"
+        obj.message ?? "Bạn cho mình thêm thông tin nhé?",
+        obj.missing_fields
       );
       break;
     }

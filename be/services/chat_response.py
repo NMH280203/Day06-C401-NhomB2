@@ -48,8 +48,52 @@ async def respond_ask(
     stream_callback: StreamCallback,
     field: str,
     message: str,
+    missing_fields: list[str] | None = None,
 ) -> None:
     """Hỏi thêm context nhưng vẫn kết thúc turn (có done)."""
-    await stream_callback("ask_context", {"ask": True, "field": field, "message": message})
+    fields = missing_fields or [field]
+    await stream_callback(
+        "ask_context",
+        {
+            "ask": True,
+            "field": field,
+            "message": message,
+            "missing_fields": fields,
+        },
+    )
     await stream_text(message, stream_callback)
-    await finish(stream_callback)
+    await finish(
+        stream_callback,
+        _follow_ups_for_field(field),
+    )
+
+
+def _follow_ups_for_field(field: str) -> list[str]:
+    suggestions = {
+        "location": [
+            "Quận 1, TP.HCM",
+            "Hoàn Kiếm, Hà Nội",
+            "Dùng vị trí GPS của tôi",
+        ],
+        "budget": [
+            "Khoảng 50k/người",
+            "Khoảng 100k/người",
+            "Dưới 150k cho 2 người",
+        ],
+        "meal_time": [
+            "Bữa trưa hôm nay",
+            "Bữa tối 2 người",
+            "Ăn vặt / cafe chiều",
+        ],
+        "people": [
+            "1 người",
+            "2 người",
+            "Nhóm 4 người",
+        ],
+        "dietary": [
+            "Ăn chay",
+            "Không hải sản",
+            "Healthy, ít dầu",
+        ],
+    }
+    return suggestions.get(field, APOLOGY_FOLLOW_UPS)

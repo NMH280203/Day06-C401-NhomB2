@@ -3,6 +3,7 @@
 import { useCallback } from "react";
 import { useChatStore } from "@/store/chatStore";
 import { sendMessage } from "@/lib/api";
+import { mergeContextFromMessage } from "@/lib/contextParser";
 import type { Message } from "@/lib/types";
 
 function generateId(): string {
@@ -23,6 +24,9 @@ export function useChat() {
     setStatus,
     setResults,
     clearHistory,
+    pendingAskField,
+    setContext,
+    setPendingAskField,
   } = useChatStore();
 
   const sendMsg = useCallback(
@@ -51,12 +55,21 @@ export function useChat() {
       setLoading(true);
       setStatus("");
 
-      // 4. Prepare all messages for payload
+      // 4. Cập nhật context từ tin nhắn (budget, vị trí, bữa ăn...)
+      const mergedContext = mergeContextFromMessage(
+        context,
+        text.trim(),
+        pendingAskField
+      );
+      setContext(mergedContext);
+      setPendingAskField(null);
+
+      // 5. Prepare all messages for payload
       const allMessages = [...messages, userMsg];
 
       try {
         await sendMessage(
-          { messages: allMessages, context },
+          { messages: allMessages, context: mergedContext },
           {
             onThinking: (status) => {
               setStatus(status);
@@ -73,10 +86,13 @@ export function useChat() {
             onTextDelta: (delta) => {
               appendToLastAssistantContent(delta);
             },
-            onAskContext: (_field, message) => {
+            onAskContext: (field, message, missingFields) => {
+              setPendingAskField(field);
               updateLastAssistantMessage({
                 content: message,
                 status: undefined,
+                ask_field: field,
+                missing_context: missingFields,
               });
             },
             onDone: (follow_up_suggestions) => {
@@ -103,6 +119,9 @@ export function useChat() {
       context,
       isLoading,
       results,
+      pendingAskField,
+      setContext,
+      setPendingAskField,
       addMessage,
       updateLastAssistantMessage,
       appendToLastAssistantContent,

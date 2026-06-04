@@ -8,6 +8,7 @@ export interface Location {
 // ─── User Context ──────────────────────────────────────────────────────────────
 export interface UserContext {
   location?: Location;
+  location_source?: "user_message" | "device_gps";
   budget?: number; // VND
   people?: number;
   meal_time?: "breakfast" | "lunch" | "dinner" | "snack";
@@ -25,7 +26,9 @@ export interface Message {
   foods?: FoodSuggestion[];
   restaurants?: Restaurant[];
   follow_up_suggestions?: string[];
-  status?: string; // trạng thái thinking
+  status?: string;
+  ask_field?: string;
+  missing_context?: string[];
 }
 
 // ─── Food Suggestion ───────────────────────────────────────────────────────────
@@ -69,6 +72,8 @@ export interface ChatStore {
   addMessage: (msg: Message) => void;
   updateLastAssistantMessage: (patch: Partial<Message>) => void;
   setContext: (ctx: Partial<UserContext>) => void;
+  setPendingAskField: (field: string | null) => void;
+  pendingAskField: string | null;
   setLoading: (v: boolean) => void;
   setStatus: (s: string) => void;
   setResults: (foods: FoodSuggestion[], restaurants: Restaurant[]) => void;
@@ -82,7 +87,7 @@ export interface SSECallbacks {
   onFoodResults: (foods: FoodSuggestion[]) => void;
   onRestaurantResults: (restaurants: Restaurant[]) => void;
   onTextDelta: (delta: string) => void;
-  onAskContext: (field: string, message: string) => void;
+  onAskContext: (field: string, message: string, missingFields?: string[]) => void;
   onDone: (follow_up_suggestions: string[]) => void;
   onError: (message: string) => void;
 }

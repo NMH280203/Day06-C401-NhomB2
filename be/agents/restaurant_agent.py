@@ -3,6 +3,7 @@ import sys
 from typing import Any
 
 from core.logging_config import get_logger, log_event, log_exception, log_location, log_restaurants
+from services.context_gaps import build_clarification
 from models.schemas import UserContext
 from prompt.builder import build_system_prompt
 from services import llm
@@ -48,10 +49,19 @@ async def _run_without_llm(context: UserContext, food_names: list[str]) -> dict:
 async def run(context: UserContext, food_names: list[str]) -> dict:
     if not context.location:
         log_event(logger, "Restaurant agent ask location", foods=",".join(food_names[:5]))
+        clarify = build_clarification(["location"])
+        if clarify:
+            return {
+                "ask": True,
+                "field": clarify.field,
+                "message": clarify.message,
+                "missing_fields": list(clarify.missing_fields),
+            }
         return {
             "ask": True,
             "field": "location",
             "message": "Bạn đang ở khu vực nào để mình tìm quán gần bạn nhé?",
+            "missing_fields": ["location"],
         }
 
     system = build_system_prompt(context) + "\n\n" + AGENT_SYSTEM

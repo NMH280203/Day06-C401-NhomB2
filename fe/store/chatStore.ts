@@ -7,6 +7,7 @@ export const useChatStore = create<ChatStore>()(
     (set) => ({
       messages: [],
       context: {},
+      pendingAskField: null as string | null,
       isLoading: false,
       currentStatus: "",
       results: {
@@ -35,6 +36,8 @@ export const useChatStore = create<ChatStore>()(
         set((state) => ({
           context: { ...state.context, ...ctx },
         })),
+
+      setPendingAskField: (field: string | null) => set({ pendingAskField: field }),
 
       setLoading: (v: boolean) => set({ isLoading: v }),
 
@@ -65,6 +68,7 @@ export const useChatStore = create<ChatStore>()(
           results: { foods: [], restaurants: [] },
           currentStatus: "",
           isLoading: false,
+          pendingAskField: null,
         }),
     }),
     {

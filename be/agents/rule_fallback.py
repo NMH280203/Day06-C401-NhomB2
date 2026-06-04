@@ -6,6 +6,7 @@ from typing import Awaitable, Callable
 from core.logging_config import get_logger, log_event, log_location, log_restaurants
 from models.schemas import Message, UserContext
 from services.chat_response import finish, respond_ask, stream_text
+from services.context_gaps import build_clarification, enrich_context_from_text, list_missing_fields
 from services.geo_hints import apply_location_priority
 from services.out_of_scope import respond as respond_out_of_scope
 from services.scope import is_food_related
@@ -69,6 +70,15 @@ def _parse_preferences(text: str, ctx: UserContext) -> list[str]:
         "chay": "vegetarian",
         "đổi gió": "variety",
         "nhanh": "fast",
+        "cay": "cay",
+        "cay nồng": "cay",
+        "ngọt": "ngot",
+        "chua": "chua",
+        "chua ngọt": "chua",
+        "mặn": "man",
+        "béo": "beo",
+        "thanh": "nhat",
+        "đắng": "dang",
     }
     for k, v in keywords.items():
         if k in text and v not in prefs:
@@ -106,7 +116,19 @@ async def run(
         await respond_out_of_scope(stream_callback)
         return
 
+    context = enrich_context_from_text(context, text)
     context, loc_src = apply_location_priority(context, text)
+
+    clarify = build_clarification(list_missing_fields(context, text))
+    if clarify:
+        await respond_ask(
+            stream_callback,
+            clarify.field,
+            clarify.message,
+            list(clarify.missing_fields),
+        )
+        return
+
     if context.location:
         log_location(logger, "Rule fallback location", context.location.lat, context.location.lng)
     if loc_src:
@@ -120,12 +142,15 @@ async def run(
     )
 
     if _is_vague(text, context):
-        await respond_ask(
-            stream_callback,
-            "budget",
-            "Bạn muốn ăn với ngân sách khoảng bao nhiêu (vd: 50k, 80k) và mấy người ạ?",
-        )
-        return
+        clarify = build_clarification(["budget", "meal_time"])
+        if clarify:
+            await respond_ask(
+                stream_callback,
+                clarify.field,
+                clarify.message,
+                list(clarify.missing_fields),
+            )
+            return
 
     meal_time = _parse_meal_time(text, context)
     budget = _parse_budget(text, context)
