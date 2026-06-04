@@ -80,3 +80,20 @@ coverage/
 # system cache
 # =========================
 .cache/
+
+
+# =========================
+# Frontend (FE)
+# =========================
+fe/node_modules/
+fe/.next/
+fe/dist/
+fe/build/
+fe/out/
+fe/.vercel/
+fe/vite-cache/
+fe/.eslintcache
+
+# Logs FE
+fe/logs/
+fe/*.log
