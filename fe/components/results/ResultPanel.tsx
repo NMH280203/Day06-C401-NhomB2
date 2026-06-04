@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { FoodSuggestion, Restaurant } from "@/lib/types";
 import { FoodList } from "./FoodList";
 import { RestaurantList } from "./RestaurantList";
@@ -16,8 +16,28 @@ type TabKey = "foods" | "restaurants" | "map";
 export function ResultPanel({ foods, restaurants }: ResultPanelProps) {
   const [activeTab, setActiveTab] = useState<TabKey>("foods");
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [selectedPlaceId, setSelectedPlaceId] = useState<string | null>(null);
 
   const hasData = foods.length > 0 || restaurants.length > 0;
+
+  useEffect(() => {
+    const firstWithCoords = restaurants.find(
+      (r) => r.lat != null && r.lng != null
+    );
+    if (firstWithCoords) {
+      setSelectedPlaceId(firstWithCoords.place_id);
+    } else if (restaurants[0]) {
+      setSelectedPlaceId(restaurants[0].place_id);
+    } else {
+      setSelectedPlaceId(null);
+    }
+  }, [restaurants]);
+
+  const focusOnMap = useCallback((restaurant: Restaurant) => {
+    setSelectedPlaceId(restaurant.place_id);
+    setActiveTab("map");
+    setIsSheetOpen(true);
+  }, []);
 
   if (!hasData) return null;
 
@@ -44,21 +64,28 @@ export function ResultPanel({ foods, restaurants }: ResultPanelProps) {
       case "foods":
         return <FoodList foods={foods} />;
       case "restaurants":
-        return <RestaurantList restaurants={restaurants} />;
+        return (
+          <RestaurantList
+            restaurants={restaurants}
+            onViewOnMap={focusOnMap}
+          />
+        );
       case "map":
         return (
           <div className="h-[400px]">
-            <MapEmbed restaurants={restaurants} />
+            <MapEmbed
+              restaurants={restaurants}
+              selectedPlaceId={selectedPlaceId}
+              onSelectPlace={setSelectedPlaceId}
+            />
           </div>
         );
     }
   };
 
-  // Desktop panel
   const panelContent = (
     <>
-      {/* Tabs */}
-      <div className="flex border-b border-white/20 px-3">
+      <div className="flex border-b border-surface-200 px-2">
         {visibleTabs.map((tab) => (
           <button
             key={tab.key}
@@ -75,28 +102,23 @@ export function ResultPanel({ foods, restaurants }: ResultPanelProps) {
         ))}
       </div>
 
-      {/* Content */}
-      <div className="flex-1 overflow-y-auto p-5">{renderContent()}</div>
+      <div className="flex-1 overflow-y-auto p-4">{renderContent()}</div>
     </>
   );
 
   return (
     <>
-      {/* Desktop: Side panel */}
-      <aside className="hidden lg:flex flex-col w-96 glass-sidebar h-full animate-slide-in-right">
+      <aside className="hidden lg:flex flex-col w-96 border-l border-surface-200 bg-white/80 backdrop-blur-xl h-full animate-slide-in-right">
         {panelContent}
       </aside>
 
-      {/* Mobile: Bottom sheet toggle button */}
       {hasData && (
         <button
           onClick={() => setIsSheetOpen(!isSheetOpen)}
           className="lg:hidden fixed bottom-24 right-4 z-40 w-14 h-14 rounded-2xl btn-glow flex items-center justify-center active:scale-95 transition-transform animate-glow-pulse"
           aria-label="Xem kết quả"
         >
-          <span className="text-xl">
-            {isSheetOpen ? "✕" : "📋"}
-          </span>
+          <span className="text-xl">{isSheetOpen ? "✕" : "📋"}</span>
           {!isSheetOpen && (
             <span className="absolute -top-1 -right-1 w-5 h-5 bg-accent-teal rounded-full text-[10px] text-white font-bold flex items-center justify-center shadow-sm">
               {foods.length + restaurants.length}
@@ -105,18 +127,13 @@ export function ResultPanel({ foods, restaurants }: ResultPanelProps) {
         </button>
       )}
 
-      {/* Mobile: Bottom sheet */}
       {isSheetOpen && (
         <>
-          {/* Backdrop */}
           <div
             className="lg:hidden fixed inset-0 bg-surface-950/20 backdrop-blur-sm z-40 animate-fade-in"
             onClick={() => setIsSheetOpen(false)}
           />
-
-          {/* Sheet */}
-          <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 glass-light rounded-t-3xl shadow-glass-lg max-h-[75vh] flex flex-col animate-slide-up">
-            {/* Handle */}
+          <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-3xl shadow-2xl max-h-[75vh] flex flex-col animate-slide-up">
             <div className="flex justify-center pt-3 pb-1">
               <div className="w-10 h-1 bg-surface-300/50 rounded-full" />
             </div>

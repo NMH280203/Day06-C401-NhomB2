@@ -43,6 +43,8 @@ export interface Restaurant {
   place_id: string;
   name: string;
   address: string;
+  lat?: number;
+  lng?: number;
   distance_km: number;
   rating: number;
   price_level: number; // 1–4

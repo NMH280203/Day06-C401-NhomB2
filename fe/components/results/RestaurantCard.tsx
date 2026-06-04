@@ -1,13 +1,20 @@
 import type { Restaurant } from "@/lib/types";
+import { formatCoords } from "@/lib/geo";
 import { Badge } from "@/components/ui/Badge";
 
 interface RestaurantCardProps {
   restaurant: Restaurant;
   index: number;
+  onViewOnMap?: (restaurant: Restaurant) => void;
 }
 
-export function RestaurantCard({ restaurant, index }: RestaurantCardProps) {
+export function RestaurantCard({
+  restaurant,
+  index,
+  onViewOnMap,
+}: RestaurantCardProps) {
   const priceLabel = "₫".repeat(restaurant.price_level);
+  const coordsLabel = formatCoords(restaurant.lat, restaurant.lng);
 
   const renderStars = (rating: number) => {
     const full = Math.floor(rating);
@@ -33,6 +40,11 @@ export function RestaurantCard({ restaurant, index }: RestaurantCardProps) {
             <p className="text-xs text-surface-400 mt-1 truncate">
               📍 {restaurant.address}
             </p>
+            {coordsLabel && (
+              <p className="text-[11px] text-surface-400 mt-0.5 font-mono truncate">
+                🌐 {coordsLabel}
+              </p>
+            )}
           </div>
           <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
             <Badge
@@ -94,18 +106,32 @@ export function RestaurantCard({ restaurant, index }: RestaurantCardProps) {
             </a>
           )}
           <div className="flex-1" />
-          <a
-            href={restaurant.maps_url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 text-xs font-medium text-primary-600 hover:text-primary-700 bg-primary-50/50 px-3 py-1.5 rounded-xl hover:bg-primary-100/50 transition-all duration-300 hover:shadow-glow-sm backdrop-blur-sm"
-          >
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
-              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
-            </svg>
-            Xem bản đồ
-          </a>
+          {onViewOnMap && restaurant.lat != null && restaurant.lng != null ? (
+            <button
+              type="button"
+              onClick={() => onViewOnMap(restaurant)}
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-primary-600 hover:text-primary-700 bg-primary-50 px-3 py-1.5 rounded-lg hover:bg-primary-100 transition-colors"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+              </svg>
+              Xem trên bản đồ
+            </button>
+          ) : (
+            <a
+              href={restaurant.maps_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-primary-600 hover:text-primary-700 bg-primary-50 px-3 py-1.5 rounded-lg hover:bg-primary-100 transition-colors"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+              </svg>
+              Xem bản đồ
+            </a>
+          )}
         </div>
       </div>
     </div>

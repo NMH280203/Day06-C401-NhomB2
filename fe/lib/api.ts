@@ -24,6 +24,19 @@ function parseSSELine(line: string): { event: string; data: string } | null {
 }
 
 // ─── Send Message (SSE) ────────────────────────────────────────────────────────
+/** Strip FE-only fields so FastAPI ChatRequest validates. */
+function toBackendPayload(payload: ChatPayload): {
+  messages: { role: "user" | "assistant"; content: string }[];
+  context: ChatPayload["context"];
+} {
+  return {
+    messages: payload.messages
+      .filter((m) => m.role === "user" || m.content.trim().length > 0)
+      .map(({ role, content }) => ({ role, content })),
+    context: payload.context,
+  };
+}
+
 export async function sendMessage(
   payload: ChatPayload,
   callbacks: SSECallbacks
@@ -32,7 +45,7 @@ export async function sendMessage(
     const response = await fetch(`${API_URL}/api/chat`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(toBackendPayload(payload)),
     });
 
     if (!response.ok) {
@@ -76,9 +89,15 @@ export async function sendMessage(
 
     // Process remaining buffer
     if (buffer.trim()) {
-      const parsed = parseSSELine(buffer);
-      if (parsed?.data && currentEvent) {
-        handleSSEEvent(currentEvent, parsed.data, callbacks);
+      const lines = buffer.split("\n");
+      for (const line of lines) {
+        const parsed = parseSSELine(line);
+        if (!parsed) continue;
+        if (parsed.event) currentEvent = parsed.event;
+        if (parsed.data && currentEvent) {
+          handleSSEEvent(currentEvent, parsed.data, callbacks);
+          currentEvent = "";
+        }
       }
     }
   } catch (err) {
@@ -93,39 +112,71 @@ function handleSSEEvent(
   data: string,
   callbacks: SSECallbacks
 ): void {
+  let parsed: unknown;
   try {
-    switch (event) {
-      case "thinking":
-        callbacks.onThinking(JSON.parse(data) as string);
-        break;
-      case "food_results":
-        callbacks.onFoodResults(JSON.parse(data) as FoodSuggestion[]);
-        break;
-      case "restaurant_results":
-        callbacks.onRestaurantResults(JSON.parse(data) as Restaurant[]);
-        break;
-      case "text":
-        callbacks.onTextDelta(JSON.parse(data) as string);
-        break;
-      case "ask_context": {
-        const parsed = JSON.parse(data) as {
-          field: string;
-          message: string;
-        };
-        callbacks.onAskContext(parsed.field, parsed.message);
-        break;
-      }
-      case "done":
-        callbacks.onDone(JSON.parse(data) as string[]);
-        break;
-      case "error":
-        callbacks.onError(JSON.parse(data) as string);
-        break;
-    }
+    parsed = JSON.parse(data);
   } catch {
-    // If JSON parse fails on text event, pass raw string
-    if (event === "text") {
-      callbacks.onTextDelta(data);
+    parsed = data;
+  }
+
+  switch (event) {
+    case "thinking": {
+      const obj = parsed as { status?: string };
+      callbacks.onThinking(
+        typeof obj === "object" && obj !== null && obj.status
+          ? String(obj.status)
+          : String(parsed)
+      );
+      break;
+    }
+    case "food_results": {
+      const obj = parsed as { foods?: FoodSuggestion[] };
+      const foods = Array.isArray(parsed)
+        ? (parsed as FoodSuggestion[])
+        : obj.foods ?? [];
+      callbacks.onFoodResults(foods);
+      break;
+    }
+    case "restaurant_results": {
+      const obj = parsed as { restaurants?: Restaurant[] };
+      const restaurants = Array.isArray(parsed)
+        ? (parsed as Restaurant[])
+        : obj.restaurants ?? [];
+      callbacks.onRestaurantResults(restaurants);
+      break;
+    }
+    case "text": {
+      const obj = parsed as { delta?: string };
+      const delta =
+        typeof obj === "object" && obj !== null && "delta" in obj
+          ? String(obj.delta ?? "")
+          : String(parsed);
+      if (delta) callbacks.onTextDelta(delta);
+      break;
+    }
+    case "ask_context": {
+      const obj = parsed as { field?: string; message?: string };
+      callbacks.onAskContext(
+        obj.field ?? "context",
+        obj.message ?? "Bạn cho mình thêm thông tin nhé?"
+      );
+      break;
+    }
+    case "done": {
+      const obj = parsed as { follow_up_suggestions?: string[] };
+      const suggestions = Array.isArray(parsed)
+        ? (parsed as string[])
+        : obj.follow_up_suggestions ?? [];
+      callbacks.onDone(suggestions);
+      break;
+    }
+    case "error": {
+      const obj = parsed as { message?: string };
+      console.error("[chat] server error:", obj?.message ?? parsed);
+      callbacks.onError(
+        "Xin lỗi, mình chưa xử lý được yêu cầu lúc này. Bạn thử gửi lại sau vài giây nhé!"
+      );
+      break;
     }
   }
 }
