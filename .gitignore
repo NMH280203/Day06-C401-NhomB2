@@ -4,4 +4,4 @@ node_modules/
 be/.venv/
 be/logs/*.log
 be/logs/*.log.*
-fe/.next
+fe/.next/
