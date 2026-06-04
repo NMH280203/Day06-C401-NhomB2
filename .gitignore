@@ -1,4 +1,7 @@
 .DS_Store
 node_modules/
 .env
-*.log
+be/.venv/
+be/logs/*.log
+be/logs/*.log.*
+fe/.next
