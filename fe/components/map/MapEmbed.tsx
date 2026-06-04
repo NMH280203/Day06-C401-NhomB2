@@ -11,7 +11,7 @@ export function MapEmbed({ restaurants }: MapEmbedProps) {
     return (
       <div className="flex items-center justify-center h-full text-surface-400 text-sm">
         <div className="text-center">
-          <span className="text-4xl block mb-2">🗺️</span>
+          <span className="text-4xl block mb-3">🗺️</span>
           <p>Chưa có dữ liệu quán ăn để hiển thị bản đồ</p>
         </div>
       </div>
@@ -35,25 +35,25 @@ export function MapEmbed({ restaurants }: MapEmbedProps) {
   if (!apiKey || apiKey === "YOUR_KEY") {
     return (
       <div className="h-full flex flex-col">
-        <div className="flex-1 bg-gradient-to-br from-sky-50 to-emerald-50 rounded-xl border border-surface-200 overflow-hidden flex flex-col items-center justify-center p-6">
-          <span className="text-5xl mb-3">🗺️</span>
-          <p className="text-sm text-surface-600 text-center mb-4">
+        <div className="flex-1 glass-card overflow-hidden flex flex-col items-center justify-center p-6">
+          <span className="text-5xl mb-4">🗺️</span>
+          <p className="text-sm text-surface-500 text-center mb-5">
             Cần Google Maps API Key để hiển thị bản đồ
           </p>
-          <div className="space-y-2 w-full max-w-sm">
+          <div className="space-y-2.5 w-full max-w-sm">
             {restaurants.map((r) => (
               <a
                 key={r.place_id}
                 href={r.maps_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 p-3 bg-white rounded-xl border border-surface-200 hover:border-primary-300 hover:shadow-md transition-all text-sm group"
+                className="flex items-center gap-3 p-3.5 glass-card group"
               >
-                <span className="text-primary-500 group-hover:scale-110 transition-transform">
+                <span className="text-primary-500 group-hover:scale-110 transition-transform duration-300">
                   📍
                 </span>
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-surface-800 truncate">
+                  <p className="font-medium text-surface-800 truncate text-sm">
                     {r.name}
                   </p>
                   <p className="text-xs text-surface-400 truncate">
@@ -61,7 +61,7 @@ export function MapEmbed({ restaurants }: MapEmbedProps) {
                   </p>
                 </div>
                 <svg
-                  className="w-4 h-4 text-surface-400 group-hover:text-primary-500 transition-colors"
+                  className="w-4 h-4 text-surface-300 group-hover:text-primary-500 transition-colors duration-300"
                   fill="none"
                   viewBox="0 0 24 24"
                   strokeWidth={1.5}
@@ -82,7 +82,7 @@ export function MapEmbed({ restaurants }: MapEmbedProps) {
   }
 
   return (
-    <div className="h-full rounded-xl overflow-hidden border border-surface-200">
+    <div className="h-full rounded-2xl overflow-hidden glass-card !p-0">
       <iframe
         className="w-full h-full min-h-[400px]"
         src={mapSrc}

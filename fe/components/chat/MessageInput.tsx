@@ -44,8 +44,8 @@ export function MessageInput({ onSend, disabled = false }: MessageInputProps) {
   );
 
   return (
-    <div className="border-t border-surface-200 bg-white/80 backdrop-blur-xl p-3 sm:p-4">
-      <div className="flex items-end gap-2 max-w-4xl mx-auto">
+    <div className="glass-navbar border-t border-white/20 p-4 sm:p-5">
+      <div className="flex items-end gap-3 max-w-4xl mx-auto">
         <div className="flex-1 relative">
           <textarea
             ref={textareaRef}
@@ -56,14 +56,14 @@ export function MessageInput({ onSend, disabled = false }: MessageInputProps) {
             placeholder="Bạn muốn ăn gì hôm nay? 🍜"
             disabled={disabled}
             rows={1}
-            className="w-full resize-none rounded-2xl border border-surface-200 bg-surface-50 px-4 py-3 pr-12 text-sm text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+            className="w-full resize-none rounded-2xl px-5 py-3.5 pr-12 text-sm text-surface-900 placeholder:text-surface-400 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed glass-input"
           />
         </div>
         <button
           id="send-button"
           onClick={handleSend}
           disabled={disabled || !text.trim()}
-          className="flex-shrink-0 w-11 h-11 rounded-xl bg-gradient-to-r from-primary-500 to-primary-600 text-white flex items-center justify-center hover:from-primary-600 hover:to-primary-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200 active:scale-95 shadow-lg shadow-primary-500/25 hover:shadow-primary-500/40"
+          className="flex-shrink-0 w-12 h-12 rounded-2xl btn-glow flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed disabled:shadow-none active:scale-95"
           aria-label="Gửi tin nhắn"
         >
           <svg

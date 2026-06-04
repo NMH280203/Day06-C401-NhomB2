@@ -34,13 +34,13 @@ export function MessageBubble({
       >
         {/* Avatar */}
         <div
-          className={`flex items-end gap-2 ${isUser ? "flex-row-reverse" : "flex-row"}`}
+          className={`flex items-end gap-2.5 ${isUser ? "flex-row-reverse" : "flex-row"}`}
         >
           <div
-            className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm ${
+            className={`flex-shrink-0 w-8 h-8 rounded-xl flex items-center justify-center text-sm transition-all duration-300 ${
               isUser
-                ? "bg-gradient-to-br from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-500/20"
-                : "bg-gradient-to-br from-surface-100 to-surface-200 text-surface-600"
+                ? "bg-gradient-to-br from-primary-400 to-primary-600 text-white shadow-glow-sm"
+                : "glass border border-white/30 text-surface-600"
             }`}
           >
             {isUser ? "👤" : "🤖"}
@@ -48,10 +48,10 @@ export function MessageBubble({
 
           {/* Bubble */}
           <div
-            className={`rounded-2xl px-4 py-3 ${
+            className={`rounded-2xl px-4 py-3 transition-all duration-300 ${
               isUser
-                ? "bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-br-md shadow-lg shadow-primary-500/20"
-                : "bg-white border border-surface-200 text-surface-800 rounded-bl-md shadow-sm"
+                ? "btn-glow text-white rounded-br-lg"
+                : "glass-card !rounded-bl-lg text-surface-800"
             }`}
           >
             {/* Text Content */}
@@ -69,7 +69,7 @@ export function MessageBubble({
 
         {/* Inline results for assistant messages */}
         {!isUser && (
-          <div className="ml-10 mt-2 space-y-3">
+          <div className="ml-10 mt-3 space-y-3">
             {message.foods && message.foods.length > 0 && (
               <FoodList foods={message.foods} />
             )}
@@ -88,7 +88,7 @@ export function MessageBubble({
                 <button
                   key={suggestion}
                   onClick={() => onSuggestionClick?.(suggestion)}
-                  className="text-xs px-3 py-1.5 rounded-full bg-primary-50 text-primary-700 border border-primary-200 hover:bg-primary-100 hover:border-primary-300 transition-all duration-200 hover:shadow-sm active:scale-95"
+                  className="text-xs px-3.5 py-1.5 rounded-full glass-card !rounded-full text-primary-700 font-medium hover:!bg-primary-50/80 hover:text-primary-600 transition-all duration-300 hover:shadow-glow-sm active:scale-95"
                 >
                   {suggestion}
                 </button>
@@ -98,7 +98,7 @@ export function MessageBubble({
 
         {/* Timestamp */}
         <p
-          className={`text-[10px] text-surface-400 mt-1.5 ${
+          className={`text-[10px] text-surface-400 mt-2 ${
             isUser ? "text-right mr-10" : "ml-10"
           }`}
         >

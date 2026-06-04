@@ -10,10 +10,10 @@ export function FoodList({ foods }: FoodListProps) {
 
   return (
     <div className="space-y-3">
-      <h3 className="text-sm font-semibold text-surface-500 uppercase tracking-wider flex items-center gap-2">
+      <h3 className="text-sm font-semibold text-surface-400 uppercase tracking-wider flex items-center gap-2">
         <span>🍜</span>
         <span>Món ăn gợi ý</span>
-        <span className="bg-primary-100 text-primary-700 text-xs px-2 py-0.5 rounded-full font-bold">
+        <span className="bg-primary-100/50 text-primary-700 text-xs px-2.5 py-0.5 rounded-full font-bold backdrop-blur-sm">
           {foods.length}
         </span>
       </h3>

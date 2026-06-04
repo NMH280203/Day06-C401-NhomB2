@@ -21,23 +21,23 @@ export function MessageList({ messages, onSuggestionClick }: MessageListProps) {
       <div className="flex-1 flex items-center justify-center p-8">
         <div className="text-center max-w-md animate-fade-in">
           {/* Hero icon */}
-          <div className="relative mx-auto w-24 h-24 mb-6">
-            <div className="absolute inset-0 bg-gradient-to-br from-primary-400 to-primary-600 rounded-3xl rotate-6 opacity-20 animate-pulse" />
-            <div className="absolute inset-0 bg-gradient-to-br from-primary-500 to-primary-600 rounded-3xl flex items-center justify-center shadow-xl shadow-primary-500/30">
-              <span className="text-4xl">🍜</span>
+          <div className="relative mx-auto w-28 h-28 mb-8 animate-float">
+            <div className="absolute inset-0 bg-gradient-to-br from-primary-400/20 to-accent-cyan/20 rounded-3xl rotate-6 blur-sm" />
+            <div className="absolute inset-0 glass-card flex items-center justify-center !rounded-3xl shadow-glow">
+              <span className="text-5xl">🍜</span>
             </div>
           </div>
 
-          <h2 className="text-2xl font-bold bg-gradient-to-r from-surface-900 to-surface-600 bg-clip-text text-transparent mb-2">
+          <h2 className="text-2xl font-bold text-gradient-cyan mb-3">
             Xin chào! 👋
           </h2>
-          <p className="text-surface-500 text-sm leading-relaxed mb-6">
+          <p className="text-surface-500 text-sm leading-relaxed mb-8">
             Mình là trợ lý gợi ý món ăn & nhà hàng AI. Hãy cho mình biết bạn
             muốn ăn gì, ở đâu, hoặc bất kỳ điều gì bạn thích nhé!
           </p>
 
           {/* Quick prompts */}
-          <div className="flex flex-wrap justify-center gap-2">
+          <div className="flex flex-wrap justify-center gap-2.5">
             {[
               "Gợi ý bữa trưa ngon gần đây",
               "Món chay cho 2 người",
@@ -47,7 +47,7 @@ export function MessageList({ messages, onSuggestionClick }: MessageListProps) {
               <button
                 key={prompt}
                 onClick={() => onSuggestionClick(prompt)}
-                className="text-xs px-4 py-2 rounded-full bg-white border border-surface-200 text-surface-600 hover:border-primary-300 hover:text-primary-600 hover:bg-primary-50 transition-all duration-200 shadow-sm hover:shadow-md active:scale-95"
+                className="text-xs px-4 py-2.5 rounded-full glass-card !rounded-full text-surface-600 font-medium hover:text-primary-600 hover:shadow-glow-sm transition-all duration-300 active:scale-95"
               >
                 {prompt}
               </button>
@@ -59,7 +59,7 @@ export function MessageList({ messages, onSuggestionClick }: MessageListProps) {
   }
 
   return (
-    <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
+    <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5">
       {messages.map((msg) => (
         <MessageBubble
           key={msg.id}

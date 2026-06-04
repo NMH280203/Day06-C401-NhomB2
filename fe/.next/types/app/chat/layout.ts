@@ -1,4 +1,4 @@
-// File: D:\Vin_AI_Train\Day_5\B2_Batch02-Day05-AI-Product-Labs\fe\app\chat\layout.tsx
+// File: D:\Vin_AI_Train\Day_5\Day06-C401-NhomB2\fe\app\chat\layout.tsx
 import * as entry from '../../../../app/chat/layout.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 

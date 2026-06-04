@@ -8,7 +8,7 @@ export function ChatWindow() {
   const { messages, isLoading, sendMessage } = useChat();
 
   return (
-    <div className="flex flex-col h-full bg-gradient-to-b from-surface-50 to-white">
+    <div className="flex flex-col h-full">
       <MessageList messages={messages} onSuggestionClick={sendMessage} />
       <MessageInput onSend={sendMessage} disabled={isLoading} />
     </div>

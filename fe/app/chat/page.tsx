@@ -17,26 +17,26 @@ export default function ChatPage() {
 
   return (
     <div className="h-screen flex flex-col">
-      {/* ─── Header ─────────────────────────────────────────────── */}
-      <header className="flex-shrink-0 border-b border-surface-200 bg-white/80 backdrop-blur-xl z-30">
-        <div className="flex items-center justify-between px-4 sm:px-6 py-3">
-          {/* Left: App name */}
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center shadow-lg shadow-primary-500/20">
+      {/* ─── Glassmorphism Header ─────────────────────────────── */}
+      <header className="flex-shrink-0 glass-navbar z-30">
+        <div className="flex items-center justify-between px-5 sm:px-8 py-4">
+          {/* Left: App brand */}
+          <div className="flex items-center gap-3.5">
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-primary-400 via-primary-500 to-primary-600 flex items-center justify-center shadow-glow animate-glow-pulse">
               <span className="text-lg">🍜</span>
             </div>
             <div>
-              <h1 className="text-base font-bold bg-gradient-to-r from-primary-600 to-primary-500 bg-clip-text text-transparent">
+              <h1 className="text-base font-bold text-gradient-cyan">
                 FoodChat AI
               </h1>
-              <p className="text-[10px] text-surface-400 -mt-0.5">
+              <p className="text-[10px] text-surface-400 font-medium tracking-wide -mt-0.5">
                 Gợi ý món ăn thông minh
               </p>
             </div>
           </div>
 
           {/* Right: Actions */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             {/* Location badge */}
             {hasLocation && (
               <Badge variant="success" size="sm" className="hidden sm:inline-flex">
@@ -52,7 +52,7 @@ export default function ChatPage() {
               variant="ghost"
               size="sm"
               onClick={clearHistory}
-              className="text-surface-500 hover:text-red-500"
+              className="text-surface-400 hover:text-red-400"
               aria-label="Xóa lịch sử"
             >
               <svg
@@ -74,8 +74,8 @@ export default function ChatPage() {
 
         {/* Location banner */}
         {!hasLocation && (
-          <div className="px-4 sm:px-6 pb-3">
-            <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-sky-50 to-primary-50 rounded-xl border border-sky-200/50">
+          <div className="px-5 sm:px-8 pb-4">
+            <div className="flex items-center gap-3 p-3.5 glass-card">
               <span className="text-xl">📍</span>
               <p className="flex-1 text-sm text-surface-600">
                 Cho phép truy cập vị trí để tìm quán gần bạn
