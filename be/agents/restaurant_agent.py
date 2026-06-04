@@ -2,7 +2,7 @@ import json
 import sys
 from typing import Any
 
-from core.logging_config import get_logger, log_exception
+from core.logging_config import get_logger, log_event, log_exception, log_location, log_restaurants
 from models.schemas import UserContext
 from prompt.builder import build_system_prompt
 from services import llm
@@ -41,6 +41,7 @@ async def _run_without_llm(context: UserContext, food_names: list[str]) -> dict:
 
 async def run(context: UserContext, food_names: list[str]) -> dict:
     if not context.location:
+        log_event(logger, "Restaurant agent ask location", foods=",".join(food_names[:5]))
         return {
             "ask": True,
             "field": "location",
@@ -49,6 +50,13 @@ async def run(context: UserContext, food_names: list[str]) -> dict:
 
     system = build_system_prompt(context) + "\n\n" + AGENT_SYSTEM
     query = " ".join(food_names) if food_names else "nhà hàng ngon"
+    log_event(
+        logger,
+        "Restaurant agent start",
+        query=query,
+        foods=",".join(food_names[:5]),
+    )
+    log_location(logger, "Restaurant agent search_from", context.location.lat, context.location.lng)
     messages: list[dict] = [
         {
             "role": "user",
@@ -123,8 +131,10 @@ async def run(context: UserContext, food_names: list[str]) -> dict:
                 }
             if tu.name == "search_nearby_restaurants":
                 raw_for_rank = result.get("restaurants", [])
+                log_restaurants(logger, "Restaurant agent search", raw_for_rank[:10])
             if tu.name == "rank_restaurants":
                 collected = result.get("restaurants", [])
+                log_restaurants(logger, "Restaurant agent ranked", collected)
 
             tool_results_content.append(
                 {

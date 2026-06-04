@@ -3,9 +3,10 @@ import { RestaurantCard } from "./RestaurantCard";
 
 interface RestaurantListProps {
   restaurants: Restaurant[];
+  onViewOnMap?: (restaurant: Restaurant) => void;
 }
 
-export function RestaurantList({ restaurants }: RestaurantListProps) {
+export function RestaurantList({ restaurants, onViewOnMap }: RestaurantListProps) {
   if (restaurants.length === 0) return null;
 
   return (
@@ -23,6 +24,7 @@ export function RestaurantList({ restaurants }: RestaurantListProps) {
             key={restaurant.place_id}
             restaurant={restaurant}
             index={i}
+            onViewOnMap={onViewOnMap}
           />
         ))}
       </div>

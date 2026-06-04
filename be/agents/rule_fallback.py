@@ -3,7 +3,7 @@
 import re
 from typing import Awaitable, Callable
 
-from core.logging_config import get_logger
+from core.logging_config import get_logger, log_event, log_location, log_restaurants
 from models.schemas import Message, UserContext
 from services.chat_response import finish, respond_ask, stream_text
 from services.geo_hints import enrich_context_from_text
@@ -100,7 +100,9 @@ async def run(
     reason: str = "",
 ) -> None:
     text = _last_user_text(messages)
-    logger.warning("Using rule-based fallback. Reason: %s", reason[:200])
+    log_event(logger, "Rule fallback start", reason=reason[:200], user=text[:120])
+    if context.location:
+        log_location(logger, "Rule fallback location", context.location.lat, context.location.lng)
 
     if text and not is_food_related(text):
         await respond_out_of_scope(stream_callback)

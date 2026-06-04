@@ -3,7 +3,7 @@ import json
 from typing import Awaitable, Callable
 
 from agents import food_agent, restaurant_agent, rule_fallback
-from core.logging_config import exception_summary, get_logger, log_exception
+from core.logging_config import exception_summary, get_logger, log_event, log_exception, log_restaurants
 from models.schemas import Message, UserContext
 from prompt.builder import build_system_prompt
 from services import llm
@@ -78,6 +78,14 @@ async def run(
 ) -> None:
     user_text = _last_user_text(messages)
     context = enrich_context_from_text(context, user_text)
+    log_event(
+        logger,
+        "Orchestrator start",
+        user=user_text[:160],
+        has_location=bool(context.location),
+        lat=context.location.lat if context.location else None,
+        lng=context.location.lng if context.location else None,
+    )
 
     if user_text and not is_food_related(user_text):
         await respond_out_of_scope(stream_callback)
@@ -114,6 +122,7 @@ async def run(
 
             for tu in tool_uses:
                 result: dict
+                log_event(logger, "Orchestrator tool", tool=tu.name, input_keys=",".join(tu.input.keys()))
                 if tu.name == "detect_intent":
                     intent = tu.input.get("intent", "clarify")
                     confidence = tu.input.get("confidence", 0)
@@ -146,6 +155,12 @@ async def run(
                         )
                         return
                     food_payload = agent_result
+                    log_event(
+                        logger,
+                        "Orchestrator food_results",
+                        count=len(agent_result.get("foods", [])),
+                        names=",".join(agent_result.get("food_names", [])[:5]),
+                    )
                     await stream_callback("food_results", agent_result)
                     result = agent_result
                 elif tu.name == "run_restaurant_agent":
@@ -163,6 +178,8 @@ async def run(
                         )
                         return
                     restaurant_payload = agent_result
+                    restaurants = agent_result.get("restaurants", [])
+                    log_restaurants(logger, "Orchestrator restaurant_results", restaurants)
                     await stream_callback("restaurant_results", agent_result)
                     result = agent_result
                 else:

@@ -8,7 +8,7 @@ from typing import Any, AsyncIterator
 from google import genai
 from google.genai import types
 
-from core.logging_config import get_logger, log_exception
+from core.logging_config import get_logger, log_event, log_exception
 
 MODEL = os.getenv("GEMINI_MODEL", "gemini-2.0-flash-lite")
 MAX_TOKENS = 4096
@@ -209,6 +209,7 @@ async def call(
     config = _build_config(system, tools)
 
     if stream:
+        log_event(logger, "LLM stream start", model=MODEL, tools=len(tools or []))
         aio_stream = await client.aio.models.generate_content_stream(
             model=MODEL,
             contents=contents,
@@ -216,12 +217,21 @@ async def call(
         )
         return _GeminiStream(aio_stream)
 
+    log_event(logger, "LLM call start", model=MODEL, messages=len(messages), tools=len(tools or []))
     response = await client.aio.models.generate_content(
         model=MODEL,
         contents=contents,
         config=config,
     )
-    return _parse_response(response)
+    parsed = _parse_response(response)
+    tool_names = [b.name for b in parsed.content if b.type == "tool_use"]
+    log_event(
+        logger,
+        "LLM call done",
+        stop_reason=parsed.stop_reason,
+        tools=",".join(tool_names) if tool_names else None,
+    )
+    return parsed
 
 
 async def call_json(system: str, prompt: str) -> dict:

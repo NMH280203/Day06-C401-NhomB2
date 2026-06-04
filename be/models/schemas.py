@@ -42,6 +42,8 @@ class Restaurant(BaseModel):
     place_id: str
     name: str
     address: str
+    lat: float | None = None
+    lng: float | None = None
     distance_km: float
     rating: float
     price_level: int

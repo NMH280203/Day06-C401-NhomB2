@@ -58,7 +58,7 @@ Query: `lat`, `lng`, `query`, optional `budget`, `radius`, `limit`.
 | `GEMINI_API_KEY` | API key từ [Google AI Studio](https://aistudio.google.com/apikey) (bắt buộc cho chat) |
 | `GOOGLE_API_KEY` | Alias được chấp nhận thay `GEMINI_API_KEY` |
 | `GEMINI_MODEL` | Mặc định `gemini-2.0-flash` |
-| `GOOGLE_PLACES_API_KEY` | Tùy chọn |
+| `OVERPASS_API_URL` | Overpass/OSM (mặc định overpass-api.de) — tìm quán, không cần key |
 | `OPENWEATHER_API_KEY` | Tùy chọn |
 
 Xem `.env.example`. Không commit `.env`.

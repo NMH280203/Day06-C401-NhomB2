@@ -1,5 +1,8 @@
+from core.logging_config import get_logger, log_event, log_restaurants
 from models.schemas import Restaurant
 from services.places import to_restaurant
+
+logger = get_logger("ranking")
 
 
 def _norm(value: float, lo: float, hi: float) -> float:
@@ -57,4 +60,13 @@ async def handle(tool_input: dict) -> dict:
 
     scored.sort(key=lambda x: x.score, reverse=True)
     top = scored[:top_n]
-    return {"restaurants": [r.model_dump() for r in top]}
+    top_raw = [r.model_dump() for r in top]
+    log_event(
+        logger,
+        "Rank restaurants",
+        input=len(raw_list),
+        top_n=top_n,
+        foods=",".join(food_names[:5]),
+    )
+    log_restaurants(logger, "Rank top", top_raw)
+    return {"restaurants": top_raw}
